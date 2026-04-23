@@ -1,1 +1,1 @@
-﻿
+﻿A Python-based Fleet Management System for heavy-duty vehicles, featuring SQLAlchemy persistence and a FastAPI web dashboard.

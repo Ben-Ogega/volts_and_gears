@@ -2,6 +2,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base, VehicleDB, DriverDB, InspectionDB
+from fleet2 import Fleet, Truck, Van
+from fleet import driver_001, truck_001
 
 # ── TEST CONFIGURATION ───────────────────────────────────────
 # We use an "In-Memory" database so it disappears after the test
@@ -64,4 +66,5 @@ class TestFleetSystem(unittest.TestCase):
         self.assertEqual(truck.status, "Maintenance")
 
 if __name__ == "__main__":
-    print(unittest.main())
+    import unittest
+    unittest.main()

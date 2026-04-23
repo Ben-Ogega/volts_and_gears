@@ -1,1 +1,14 @@
-﻿
+﻿# Environments
+.venv/
+env/
+venv/
+
+# Databases
+*.db
+*.sqlite3
+
+# Local Reports/Data
+*.csv
+*.json
+__pycache__/
+.vscode/
