@@ -1,0 +1,2 @@
+﻿vin,make,model,year,engine,engine_hours,odometer,fuel_level,fuel_capacity,status,tyre_condition,lights_status,coolant_level,capacity,axles,is_loaded,type
+KBZ001,Mercedes,Actros,2026,N/A,0,0,100,400,Available,Good,Working,Full,30000,2,False,Truck

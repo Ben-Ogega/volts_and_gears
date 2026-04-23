@@ -1,0 +1,21 @@
+﻿[
+    {
+        "vin": "KBZ001",
+        "make": "Mercedes",
+        "model": "Actros",
+        "year": 2026,
+        "engine": "N/A",
+        "engine_hours": 0,
+        "odometer": 0,
+        "fuel_level": 100,
+        "fuel_capacity": 400,
+        "status": "Available",
+        "tyre_condition": "Good",
+        "lights_status": "Working",
+        "coolant_level": "Full",
+        "capacity": 30000,
+        "axles": 2,
+        "is_loaded": false,
+        "type": "Truck"
+    }
+]
