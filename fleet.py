@@ -1,9 +1,14 @@
 # ============================================================
 # VOLTS AND GEARS — Fleet Management System
-# Learning OOP — April 2026
+# Learning OOP — 23 April 2026
+# Author: Ben Ogega
+# fleet.py — Core Classes and Logic
 # ============================================================
 
 from datetime import datetime
+import json
+import numpy as np
+import unittest  # This is the built-in Python library
 
 # ── CONSTANTS ────────────────────────────────────────────────
 MAX_DRIVING_HOURS = 8        # Kenya Traffic Act limit
@@ -11,11 +16,13 @@ OIL_SERVICE_THRESHOLD = 5000  # engine hours before service
 
 
 # ── VEHICLE (BASE CLASS) ─────────────────────────────────────
-class Vehicle:
+class Vehicle(object): 
+    # Why is it inhering from object? In Python 3, 
+    #it's not necessary to inherit from object explicitly, as all classes do so by default. However, it doesn't cause any issues and can be left as is for clarity or compatibility with older Python versions.
     def __init__(self, vin, make, model, year, engine, engine_hours,
-                 odometer, fuel_level, status="Available",
-                 tyre_condition="Good", lights_status="Working",
-                 coolant_level="Full"):
+                odometer, fuel_level, status="Available",
+                tyre_condition="Good", lights_status="Working",
+                coolant_level="Full"):
         self.vin = vin
         self.make = make
         self.model = model
@@ -28,10 +35,11 @@ class Vehicle:
         self.tyre_condition = tyre_condition
         self.lights_status = lights_status
         self.coolant_level = coolant_level
+        self.trip_log = []
 
     @property
     def age(self):
-        return 2026 - self.year
+        return datetime.now().year - self.year
     
     @property
     def is_service_due(self):
@@ -49,8 +57,7 @@ class Vehicle:
         return len(vin) >= 5 and vin.isalnum()
     
     @classmethod 
-  
-    def from_dict(cls, data):
+    def from_dict(cls, data: dict) -> 'Vehicle':
         """
         In simple terms what this does is allow us to create a Vehicle instance from
         a dictionary of attributes.
@@ -82,7 +89,24 @@ class Vehicle:
             coolant_level=data.get('coolant_level', "Full")
         )
 
-    def update_mileage(self, new_mileage):
+    def to_dict(self) -> dict:
+        return {
+            'vin': self.vin,
+            'make': self.make,
+            'model': self.model,
+            'year': self.year,
+            'engine': self.engine,
+            'engine_hours': self.engine_hours,
+            'odometer': self.odometer,
+            'fuel_level': self.fuel_level,
+            'status': self.status,
+            'tyre_condition': self.tyre_condition,
+            'lights_status': self.lights_status,
+            'coolant_level': self.coolant_level,
+            'trip_log': self.trip_log
+        }
+
+    def update_mileage(self, new_mileage: int):
         if new_mileage > self.odometer:
             self.odometer = new_mileage
             return f"New mileage: {self.odometer} km"
@@ -100,6 +124,17 @@ class Vehicle:
         else:
             print("Error: Invalid status")
 
+    def log_trip(self, distance: float, fuel_used: float, terrain: str) -> dict:
+        trip = {
+            'date': datetime.now().strftime('%Y-%m-%d'),
+            'distance': distance,
+            'fuel_used': fuel_used,
+            'terrain': terrain,
+        }
+        self.trip_log.append(trip)
+        return trip
+    
+    
 
 # ── TRUCK ────────────────────────────────────────────────────
 class Truck(Vehicle):
@@ -115,13 +150,13 @@ class Truck(Vehicle):
         self.is_loaded = is_loaded
         self.fuel_capacity = fuel_capacity
 
-    def check_current_weight(self):
+    def check_current_weight(self) -> int:
         if self.is_loaded:
             return self.capacity
         else:
             return 0
 
-    def estimate_fuel_burn(self, load, terrain, engine_capacity):
+    def estimate_fuel_burn(self, load: float, terrain: str, engine_capacity: float) -> float:
         terrain_bases = {
             "tarmac": 1.0,
             "murram": 1.5,
@@ -165,6 +200,30 @@ class Driver:
         self.current_vehicle = current_vehicle
         self.driving_hours = driving_hours
         self.total_kilometres = total_kilometres
+        self.trip_log = []
+
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Driver':
+        return cls(
+            name=data.get('name'),
+            employee_id=data.get('employee_id'),
+            licence_class=data.get('licence_class'),
+            status=data.get('status', "Off Duty"),
+            driving_hours=data.get('driving_hours', 0),
+            total_kilometres=data.get('total_kilometres', 0)
+        )
+    
+    def to_dict(self) -> dict:
+        return {
+            'name': self.name,
+            'employee_id': self.employee_id,
+            'licence_class': self.licence_class,
+            'status': self.status,
+            'driving_hours': self.driving_hours,
+            'total_kilometres': self.total_kilometres,
+        }
+    
 
     def clock_in(self):
         self.status = "On Duty"
@@ -181,14 +240,6 @@ class Driver:
             return f"Vehicle {vehicle.vin} assigned to {self.name}"
         else:
             return f"Error: {self.name} is Off Duty. Cannot assign vehicle."
-
-    def log_trip(self, distance):
-        if self.current_vehicle is None:
-            return "Error: No vehicle assigned"
-        self.current_vehicle.odometer += distance
-        self.total_kilometres += distance
-        return f"Trip logged: {distance} km. Total: {self.total_kilometres} km"
-
 
 # ── PRE TRIP INSPECTION ───────────────────────────────────────
 class PreTripInspection:
@@ -336,6 +387,28 @@ class Fleet:
                 alerts.append(f"{vehicle.vin} — Currently in Maintenance")
         return alerts
 
+    def fleet_cpk_analysis(self, fuel_price: float = 150.0) -> dict:
+        results = {}
+        for vehicle in self.vehicle_list:
+            if not vehicle.trip_log:
+                continue
+            distances = np.array([t['distance'] for t in vehicle.trip_log])
+            fuel_used = np.array([t['fuel_used'] for t in vehicle.trip_log])
+
+            # Guard against zero distances
+            if np.any(distances == 0):
+                continue
+
+            cpk = (fuel_used * fuel_price) / distances
+            results[vehicle.vin] = {
+                'make_model': f"{vehicle.make} {vehicle.model}",
+                'avg_cpk': round(float(np.mean(cpk)), 2),
+                'worst_cpk': round(float(np.max(cpk)), 2),
+                'best_cpk': round(float(np.min(cpk)), 2),
+                'total_distance': int(np.sum(distances)),
+                'total_fuel': int(np.sum(fuel_used)),
+            }
+        return results
 
     def __str__(self):
         return f"Fleet: {self.fleet_name} | Vehicles: {len(self.vehicle_list)} | Drivers: {len(self.driver_roster)}"
@@ -345,6 +418,28 @@ class Fleet:
 
     def __repr__(self):
         return f"Fleet(name='{self.fleet_name}', vehicles={len(self.vehicle_list)}, drivers={len(self.driver_roster)})"
+
+    def save_fleet(self, filename: str) -> None:
+        data = {
+            'fleet_name': self.fleet_name,
+            'vehicles': [v.to_dict() for v in self.vehicle_list],
+            'drivers': [d.to_dict() for d in self.driver_roster],
+            'active_assignments': self.active_assignments,
+        }
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+        print(f"Fleet saved to {filename}")
+
+
+    def load_fleet(self, filename: str) -> None:
+        with open(filename, 'r') as f:
+            data = json.load(f)
+
+        self.fleet_name = data['fleet_name']
+        self.vehicle_list = [Vehicle.from_dict(v) for v in data['vehicles']]
+        self.driver_roster = [Driver.from_dict(d) for d in data['drivers']]
+        self.active_assignments = data['active_assignments']
+        print(f"Fleet loaded from {filename}")  
 
 
 # ============================================================
@@ -385,7 +480,7 @@ driver_001 = Driver(
     licence_class="Class A",
 )
 
-# ── TESTS ────────────────────────────────────────────────────
+
 driver_001.clock_in()
 driver_001.assign_vehicle(truck_001)
 
@@ -397,68 +492,11 @@ inspection = PreTripInspection(
 )
 
 
-# ── FLEET TESTS ──────────────────────────────────────────────
-
-# 1. Create fleet
-nairobi_fleet = Fleet("Nairobi Northern Corridor Hub")
-
-# 2. Add vehicles and drivers
-nairobi_fleet.add_vehicle(truck_001)
-nairobi_fleet.add_vehicle(van_001)
-nairobi_fleet.hire_driver(driver_001)
-
-# 3. Test __str__ and __len__
-print(nairobi_fleet)
-print(f"Fleet size: {len(nairobi_fleet)}")
-
-# 4. Test dispatch
-driver_001.clock_in()
-print(nairobi_fleet.dispatch("KBZ001", "EMP001"))
-
-# 5. Test generate_report
-print(nairobi_fleet.generate_report())
-
-# 6. Test maintenance_alert
-print(nairobi_fleet.maintenance_alert())
-
-# 7. Test dispatch error handling
-try:
-    nairobi_fleet.dispatch("KBZ001", "EMP001")
-except DispatchError as e:
-    print(f"Dispatch failed: {e}")
-
-
-# Test staticmethod
-print(Vehicle.validate_vin("KBZ001"))  # True
-print(Vehicle.validate_vin("KB"))      # False
-
-# Test classmethod
-data = {
-    'vin': 'KBZ999',
-    'make': 'Volvo',
-    'model': 'FH16',
-    'year': 2019,
-    'engine': 'D16G',
-    'engine_hours': 3200,
-    'odometer': 98000,
-    'fuel_level': 200,
-}
-volvo = Vehicle.from_dict(data)
-print("==Vehicle Make === Model === Age ==")
-print(f"{volvo.make}, {volvo.model}, {volvo.age}")
-print()
-print(Vehicle.validate_vin("KBZ001"))  # True
-print(Vehicle.validate_vin("KB"))      # False
-print(Vehicle.validate_vin("KBZ 001")) # False — space in VIN
-# print(f"Truck Age: {truck_001.age} years old")
-# print(f"Is Service Due: {truck_001.is_service_due} hours")
-# print(f"Fuel Percentage: {truck_001.fuel_percentage}%")
-
-# print(f"Van Age: {van_001.age} years old")
-# print(f"Is Service Due: {van_001.is_service_due} hours")
-# print(f"Fuel Percentage: {van_001.fuel_percentage}%")
-# print()
-
-# print(inspection.generate_summary())
-# print(truck_001.estimate_fuel_burn(25000, "murram", 12000))
-# print(driver_001.log_trip(480))
+if __name__ == "__main__":
+    print(inspection.generate_summary())
+    print(truck_001.estimate_fuel_burn(load=25000, terrain="tarmac", engine_capacity=10000))
+    print(truck_001.fuel_percentage)
+    print("Fleet Management System Active...")
+    nairobi_fleet = Fleet("Nairobi Hub")
+    nairobi_fleet.add_vehicle(truck_001)
+    print(nairobi_fleet.generate_report())

@@ -1,0 +1,79 @@
+{
+    "fleet_name": "Nairobi Northern Corridor Hub",
+    "vehicles": [
+        {
+            "vin": "KBZ001",
+            "make": "Mercedes",
+            "model": "Actros",
+            "year": 2020,
+            "engine": "OM471",
+            "engine_hours": 4500,
+            "odometer": 120000,
+            "fuel_level": 150,
+            "status": "InTransit",
+            "tyre_condition": "Good",
+            "lights_status": "Working",
+            "coolant_level": "Full",
+            "trip_log": [
+                {
+                    "date": "2026-04-23",
+                    "distance": 480,
+                    "fuel_used": 216,
+                    "terrain": "murram"
+                },
+                {
+                    "date": "2026-04-23",
+                    "distance": 320,
+                    "fuel_used": 128,
+                    "terrain": "tarmac"
+                },
+                {
+                    "date": "2026-04-23",
+                    "distance": 150,
+                    "fuel_used": 90,
+                    "terrain": "offroad"
+                },
+                {
+                    "date": "2026-04-23",
+                    "distance": 480,
+                    "fuel_used": 230,
+                    "terrain": "murram"
+                },
+                {
+                    "date": "2026-04-23",
+                    "distance": 320,
+                    "fuel_used": 140,
+                    "terrain": "tarmac"
+                }
+            ]
+        },
+        {
+            "vin": "KBC001",
+            "make": "Toyota",
+            "model": "Hiace",
+            "year": 2021,
+            "engine": "2TR-FE",
+            "engine_hours": 1200,
+            "odometer": 45000,
+            "fuel_level": 40,
+            "status": "Available",
+            "tyre_condition": "Good",
+            "lights_status": "Working",
+            "coolant_level": "Full",
+            "trip_log": []
+        }
+    ],
+    "drivers": [
+        {
+            "name": "James Kamau",
+            "employee_id": "EMP001",
+            "licence_class": "Class A",
+            "status": "On Duty",
+            "driving_hours": 0,
+            "total_kilometres": 0
+        }
+    ],
+    "active_assignments": {
+        "EMP001": "KBZ001"
+    }
+}
